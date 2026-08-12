@@ -1,28 +1,17 @@
-from pypdf import PdfReader
-
-def extract_text_from_pdf(pdf_path):
-    reader = PdfReader(pdf_path)
-
-    pages = []
-
-    for page_number, page in enumerate(reader.pages, start=1):
-        text = page.extract_text()
-
-        if text:
-            pages.append({
-                "page": page_number,
-                "text": text
-            })
-
-    return pages
+from ingest import extract_text_from_pdf
 
 
 def create_chunks(pages, chunk_size=1000, overlap=200):
+
+    if overlap >= chunk_size:
+        raise ValueError("Overlap must be smaller than chunk size.")
+
     chunks = []
 
     for page in pages:
 
         text = page["text"]
+        page_number = page["page"]
 
         start = 0
 
@@ -30,29 +19,33 @@ def create_chunks(pages, chunk_size=1000, overlap=200):
 
             end = start + chunk_size
 
-            chunk_text = text[start:end]
+            chunk_text = text[start:end].strip()
 
-            chunks.append({
-                "text": chunk_text,
-                "page": page["page"]
-            })
+            if chunk_text:
+                chunks.append({
+                    "text": chunk_text,
+                    "page": page_number
+                })
 
             start += chunk_size - overlap
 
     return chunks
 
-# Test
+# Test the module directly
 
-pdf_path = "rheum_meta_1.pdf"
+if __name__ == "__main__":
 
-pages = extract_text_from_pdf(pdf_path)
+    pdf_path = "rheum_meta_1.pdf"
 
-chunks = create_chunks(pages)
+    pages = extract_text_from_pdf(pdf_path)
 
-print("Total pages:", len(pages))
-print("Total chunks:", len(chunks))
+    chunks = create_chunks(pages)
 
-print("\nFirst chunk:\n")
-print(chunks[0]["text"])
+    print("Total pages:", len(pages))
+    print("Total chunks:", len(chunks))
 
-print("\nPage:", chunks[0]["page"])
+    if chunks:
+        print("\nFirst chunk:")
+        print(chunks[0]["text"])
+
+        print("\nSource page:", chunks[0]["page"])

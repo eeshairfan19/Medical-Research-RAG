@@ -1,18 +1,20 @@
 from pypdf import PdfReader
 
-pdf_path = "rheum_meta_1.pdf"
 
-reader = PdfReader(pdf_path)
+def extract_text_from_pdf(pdf_path):
 
-text = ""
+    reader = PdfReader(pdf_path)
 
-for page in reader.pages:
-    page_text = page.extract_text()
+    pages = []
 
-    if page_text:
-        text += page_text + "\n"
+    for page_number, page in enumerate(reader.pages, start=1):
 
-print("Total characters:", len(text))
+        text = page.extract_text()
 
-print("\nFirst 2000 characters:\n")
-print(text[:2000])
+        if text and text.strip():
+            pages.append({
+                "page": page_number,
+                "text": text.strip()
+            })
+
+    return pages
